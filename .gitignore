@@ -1,0 +1,28 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+venv/
+ENV/
+
+# Captured images
+static/captures/*.jpg
+
+# IDE specific files
+.vscode/
+.idea/
+*.swp
+.DS_Store
+
+# Environment variables
+.env 
+
+# Virtual Environment
+myenv/
+myenv_py311/
+myenv_py311_new/
+.venv/
+venv/
+ENV/

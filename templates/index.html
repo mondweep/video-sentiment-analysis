@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Emotion Tracker</title>
+    <style>
+        .container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 20px;
+            padding: 20px;
+        }
+        .video-container {
+            width: 640px;
+            height: 480px;
+            border: 1px solid #ccc;
+        }
+        .emotion-log {
+            width: 80%;
+            height: 300px;
+            overflow-y: auto;
+            border: 1px solid #ccc;
+            padding: 10px;
+            background: #f9f9f9;
+            border-radius: 4px;
+            margin-top: 20px;
+        }
+        .emotion-entry {
+            padding: 8px;
+            border-bottom: 1px solid #eee;
+            font-family: monospace;
+            display: flex;
+            justify-content: space-between;
+        }
+        .emotion-entry:hover {
+            background-color: #f0f0f0;
+        }
+        .emotion-timestamp {
+            color: #666;
+        }
+        .emotion-label {
+            font-weight: bold;
+            color: #333;
+        }
+        .button-container {
+            display: flex;
+            gap: 10px;
+        }
+        .button {
+            padding: 10px 20px;
+            cursor: pointer;
+        }
+        .button-record {
+            background-color: #ff4444;
+            color: white;
+            border: none;
+            border-radius: 4px;
+        }
+        .button-stop {
+            background-color: #444444;
+            color: white;
+            border: none;
+            border-radius: 4px;
+        }
+        .button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+        .log-header {
+            font-weight: bold;
+            padding: 10px;
+            background: #eee;
+            border-bottom: 2px solid #ddd;
+            position: sticky;
+            top: 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Emotion Tracker</h1>
+        
+        <div class="video-container">
+            <img id="videoFeed" src="{{ url_for('video_feed') }}" width="640" height="480">
+        </div>
+
+        <div class="button-container">
+            <button onclick="startRecording()" id="recordButton" class="button button-record">Start Recording</button>
+            <button onclick="stopRecording()" id="stopButton" class="button button-stop" disabled>Stop Recording</button>
+        </div>
+        
+        <div class="emotion-log">
+            <div class="log-header">Emotion Log</div>
+            <div id="emotionLog">
+                <!-- Emotion entries will be added here dynamically -->
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function startRecording() {
+            fetch('/start_recording')
+                .then(response => {
+                    document.getElementById('recordButton').disabled = true;
+                    document.getElementById('stopButton').disabled = false;
+                    document.getElementById('emotionLog').innerHTML = ''; // Clear previous entries
+                    pollEmotionUpdates();
+                });
+        }
+
+        function stopRecording() {
+            fetch('/stop_recording')
+                .then(response => {
+                    document.getElementById('recordButton').disabled = false;
+                    document.getElementById('stopButton').disabled = true;
+                });
+        }
+
+        function pollEmotionUpdates() {
+            fetch('/get_emotions')
+                .then(response => response.json())
+                .then(data => {
+                    const logDiv = document.getElementById('emotionLog');
+                    logDiv.innerHTML = ''; // Clear existing entries
+                    
+                    data.emotions.forEach(entry => {
+                        const entryDiv = document.createElement('div');
+                        entryDiv.className = 'emotion-entry';
+                        entryDiv.innerHTML = `
+                            <span class="emotion-timestamp">${entry.timestamp}</span>
+                            <span class="emotion-label">${entry.emotion}</span>
+                        `;
+                        logDiv.insertBefore(entryDiv, logDiv.firstChild);
+                    });
+
+                    // Auto-scroll to the latest entry
+                    logDiv.scrollTop = 0;
+
+                    if (data.recording) {
+                        setTimeout(pollEmotionUpdates, 1000); // Poll every second
+                    } else {
+                        document.getElementById('recordButton').disabled = false;
+                        document.getElementById('stopButton').disabled = true;
+                    }
+                });
+        }
+    </script>
+</body>
+</html> 
